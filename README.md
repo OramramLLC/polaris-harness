@@ -73,6 +73,8 @@ py -m venv .venv
 
 To move the pin, change `deploy/mellyn-core-pin.txt`, then check out the new SHA in `core/` and reinstall it. `tests/test_repo_setup.py` fails while `core/` and the pin disagree.
 
+CI ([`.github/workflows/polaris-ci.yml`](.github/workflows/polaris-ci.yml)) installs the same way. It reads the core commit from `deploy/mellyn-core-pin.txt`, and runs the pinned Mellyn Guardrails gate (Gitleaks, dependency verification, Semgrep), Ruff from the hash-locked lint lock, and the tests plus `validate-tasks` on Python 3.12 and 3.14.
+
 Run the test suite:
 
 ```powershell

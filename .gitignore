@@ -19,6 +19,7 @@ dist/
 # Local checkout of the pinned Mellyn core (see deploy/mellyn-core-pin.txt) and evaluation outputs
 core/
 runs/
+artifacts/
 
 # IDE & OS
 .vscode/settings.json
