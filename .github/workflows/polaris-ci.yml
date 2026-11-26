@@ -1,0 +1,129 @@
+name: Polaris Harness CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  guardrails:
+    name: Mellyn Guardrails
+    uses: OramramLLC/mellyn-guardrails/.github/workflows/mellyn-reusable-ai-security-gate.yml@21c719e49137c4f7cd2857f073528bbb436f5a07
+    with:
+      # This repository carries no AI-assistant rules files (.agent/rules, CLAUDE.md, ...); the hidden-Unicode check
+      # still runs. Set this to true once the pack's canonical rules are adopted here.
+      require-pack-rules: false
+
+  lint:
+    name: Ruff Lint & Format Check
+    needs: [guardrails]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify Mellyn Guardrails passed
+        env:
+          GUARDRAILS_RESULT: ${{ needs.guardrails.result }}
+        run: |
+          if [ "$GUARDRAILS_RESULT" != "success" ]; then
+            echo "::error::Mellyn Guardrails reusable workflow did not succeed (result=$GUARDRAILS_RESULT)."
+            exit 1
+          fi
+
+      - name: Checkout candidate tree
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: candidate
+          persist-credentials: false
+
+      # A pull request cannot loosen the lint rules it is judged by: config and Ruff version come from the base commit.
+      - name: Checkout baseline Ruff config and lint lockfile
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha || github.sha }}
+          path: baseline
+          sparse-checkout: |
+            deploy/requirements-lint.lock
+            pyproject.toml
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+
+      - name: Install hash-locked Ruff
+        run: |
+          lock="baseline/deploy/requirements-lint.lock"
+          if [ ! -f "$lock" ]; then lock="candidate/deploy/requirements-lint.lock"; fi
+          python -m pip install --disable-pip-version-check --require-hashes --no-deps -r "$lock"
+
+      - name: Ruff (lint & format check against baseline configuration)
+        working-directory: candidate
+        run: |
+          ruff check --config ../baseline/pyproject.toml .
+          ruff format --check --config ../baseline/pyproject.toml .
+
+  tests:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.14"]
+    steps:
+      - name: Checkout polaris-harness
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Read the pinned Mellyn core commit
+        id: core-pin
+        run: |
+          sha="$(tr -d '[:space:]' < deploy/mellyn-core-pin.txt)"
+          if ! printf '%s' "$sha" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::deploy/mellyn-core-pin.txt must hold one full 40-character commit SHA."
+            exit 1
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout pinned OramramLLC/mellyn_security core
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: OramramLLC/mellyn_security
+          ref: ${{ steps.core-pin.outputs.sha }}
+          path: core
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Every package comes from a hash lock; both editable installs use --no-build-isolation, so pip never downloads an
+      # unpinned, unhashed build backend.
+      - name: Install hash-locked dependencies, pinned core, and polaris-harness
+        run: |
+          python -m pip install --disable-pip-version-check --require-hashes --no-deps \
+            -r core/deploy/requirements-ci-tests.lock \
+            -r deploy/requirements-tests.lock \
+            -r deploy/requirements-build.lock
+          python -m pip install --disable-pip-version-check --no-deps --no-build-isolation -e ./core -e .
+          python -m pip check
+
+      - name: Run unit, grader-regression, and end-to-end tests
+        run: python -m pytest -v -p no:cacheprovider
+
+      - name: Validate task oracles (noop fails, golden passes, traps caught)
+        run: polaris-eval validate-tasks --tasks-dir tasks --output-dir artifacts/validate
+
+      - name: Upload validation scorecard
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: validate-tasks-py${{ matrix.python-version }}
+          path: |
+            artifacts/validate/run_report.json
+            artifacts/validate/scorecard.md
+          if-no-files-found: error
