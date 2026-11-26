@@ -1,7 +1,14 @@
 # CODEOWNERS — protect the pinned core, hash-locked dependencies, the graders, and the task bundles.
 
-# Repository settings, pinned Mellyn core, and hash-locked dependencies
+# AI coding assistant instructions and Claude Code settings
+/.agent/                        @OramramLLC
+/CLAUDE.md                      @OramramLLC
+/.cursorrules                   @OramramLLC
+/.claude/settings.json          @OramramLLC
+
+# Repository settings, CI, pre-commit, pinned Mellyn core, and hash-locked dependencies
 /.github/                       @OramramLLC
+/.pre-commit-config.yaml        @OramramLLC
 /deploy/                        @OramramLLC
 /pyproject.toml                 @OramramLLC
 /SECURITY.md                    @OramramLLC
