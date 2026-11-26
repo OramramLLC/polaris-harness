@@ -14,9 +14,8 @@ jobs:
     name: Mellyn Guardrails
     uses: OramramLLC/mellyn-guardrails/.github/workflows/mellyn-reusable-ai-security-gate.yml@21c719e49137c4f7cd2857f073528bbb436f5a07
     with:
-      # This repository carries no AI-assistant rules files (.agent/rules, CLAUDE.md, ...); the hidden-Unicode check
-      # still runs. Set this to true once the pack's canonical rules are adopted here.
-      require-pack-rules: false
+      # .agent/rules/owasp-secure-ai-coding.md must match the pinned pack's canonical copy exactly.
+      require-pack-rules: true
 
   lint:
     name: Ruff Lint & Format Check

@@ -75,6 +75,12 @@ To move the pin, change `deploy/mellyn-core-pin.txt`, then check out the new SHA
 
 CI ([`.github/workflows/polaris-ci.yml`](.github/workflows/polaris-ci.yml)) installs the same way. It reads the core commit from `deploy/mellyn-core-pin.txt`, and runs the pinned Mellyn Guardrails gate (Gitleaks, dependency verification, Semgrep), Ruff from the hash-locked lint lock, and the tests plus `validate-tasks` on Python 3.12 and 3.14.
 
+Local guardrail hooks ([`.pre-commit-config.yaml`](.pre-commit-config.yaml), pinned by commit SHA) run the same Mellyn Guardrails checks before you push: dependency verification, the AI-rules check, Gitleaks and Semgrep, plus Ruff and basic file hygiene. They need `pre-commit`, `semgrep` and `gitleaks` on `PATH`, and are advisory: CI is the gate.
+
+```powershell
+pre-commit run --all-files
+```
+
 Run the test suite:
 
 ```powershell

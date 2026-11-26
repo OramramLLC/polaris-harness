@@ -1,0 +1,35 @@
+# Hook repos are pinned to commit SHAs. To upgrade, run: pre-commit autoupdate --freeze
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # frozen: v6.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: detect-private-key
+      # Task reference patches are data: a blank context line is " \n" and trailing ones are part of the hunk, so the
+      # whitespace fixers would corrupt them. Every other hook (secrets, SAST, ruff) still covers tasks/.
+      - id: end-of-file-fixer
+        exclude: ^tasks/.*\.patch$
+      - id: trailing-whitespace
+        exclude: ^tasks/.*\.patch$
+      - id: mixed-line-ending
+        args: [--fix=lf]
+        exclude: ^tasks/.*\.patch$
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: 38bfb07c0c64c304f47eb52090f8288150c77730 # frozen: v0.17.1
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/OramramLLC/mellyn-guardrails
+    rev: 21c719e49137c4f7cd2857f073528bbb436f5a07
+    hooks:
+      - id: mellyn-verify-dependencies
+      - id: mellyn-check-agent-rules
+        args: [--check, --require-pack-canonical]
+      - id: mellyn-gitleaks
+      - id: mellyn-semgrep
