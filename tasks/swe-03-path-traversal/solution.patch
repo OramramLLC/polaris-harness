@@ -1,0 +1,33 @@
+--- a/src/vault_service/paths.py
++++ b/src/vault_service/paths.py
+@@ -2,7 +2,6 @@
+ 
+ from __future__ import annotations
+ 
+-import os
+ from pathlib import Path
+ 
+ from vault_service.models import AccessDeniedError
+@@ -19,14 +18,16 @@
+     """
+     if not isinstance(rel_path, str) or not rel_path.strip():
+         raise AccessDeniedError("Path cannot be empty.")
++    if "\x00" in rel_path or any(ord(ch) < 32 or ord(ch) == 127 for ch in rel_path):
++        raise AccessDeniedError("Path contains control characters.")
+ 
+-    # BUG: Naive string prefix check after os.path.normpath does not follow symlinks,
+-    # fails to reject sibling-prefix directories (<root>_secret), and misses some escapes.
+     cleaned = rel_path.replace("\\", "/")
+-    if os.path.isabs(cleaned):
++    candidate_rel = Path(cleaned)
++    if candidate_rel.is_absolute() or (len(cleaned) >= 2 and cleaned[1] == ":"):
+         raise AccessDeniedError(f"Absolute path denied: {rel_path!r}")
+ 
+-    normed = os.path.normpath(os.path.join(str(root), cleaned))
+-    if not normed.startswith(str(root)):
++    root_resolved = root.resolve()
++    resolved = (root_resolved / candidate_rel).resolve(strict=False)
++    if not resolved.is_relative_to(root_resolved):
+         raise AccessDeniedError(f"Path escapes vault root: {rel_path!r}")
+-    return Path(normed)
++    return resolved

@@ -1,0 +1,18 @@
+# CODEOWNERS — protect the pinned core, hash-locked dependencies, the graders, and the task bundles.
+
+# Repository settings, pinned Mellyn core, and hash-locked dependencies
+/.github/                       @OramramLLC
+/deploy/                        @OramramLLC
+/pyproject.toml                 @OramramLLC
+
+# The graders and the boundary to Mellyn (a change here changes every score)
+/src/polaris_harness/grading/   @OramramLLC
+/src/polaris_harness/hashing.py @OramramLLC
+/src/polaris_harness/sandbox.py @OramramLLC
+/src/polaris_harness/airlock_runner.py @OramramLLC
+/src/polaris_harness/mcp_workspace_server.py @OramramLLC
+/PUBLIC_SURFACE.md              @OramramLLC
+
+# Task bundles (hidden tests and reference solutions) and the harness's own tests
+/tasks/                         @OramramLLC
+/tests/                         @OramramLLC

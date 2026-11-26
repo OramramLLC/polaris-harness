@@ -1,0 +1,52 @@
+--- a/src/triage_engine/sla.py
++++ b/src/triage_engine/sla.py
+@@ -22,12 +22,10 @@
+ def normalize_ticket_id(ticket_id: str) -> str:
+     """Normalize ticket identifiers for canonical deduplication."""
+-    # BUG: fails to fold case, so 'inc-101' and 'INC-101' do not deduplicate.
+-    return ticket_id.strip()
++    return ticket_id.strip().upper()
+ 
+ 
+ def is_sla_breached(severity: Severity, age_hours: float) -> bool:
+     """Return True when a ticket has reached or exceeded its severity SLA threshold."""
+-    # BUG: strict '>' misses exact boundary breaches (e.g., age_hours == 1.0 for P1).
+-    return age_hours > SLA_HOURS[severity]
++    return age_hours >= SLA_HOURS[severity]
+ 
+ 
+--- a/src/triage_engine/pipeline.py
++++ b/src/triage_engine/pipeline.py
+@@ -14,14 +14,24 @@
+     by_id: dict[str, Ticket] = {}
+     for ticket in tickets:
+         norm_id = normalize_ticket_id(ticket.ticket_id)
+-        # BUG: overwrites earlier ticket and drops highest severity / earliest created_epoch.
+-        by_id[norm_id] = Ticket(
+-            ticket_id=norm_id,
+-            severity=ticket.severity,
+-            age_hours=ticket.age_hours,
+-            created_epoch=ticket.created_epoch,
+-            summary=ticket.summary,
+-        )
++        existing = by_id.get(norm_id)
++        if existing is None:
++            by_id[norm_id] = Ticket(
++                ticket_id=norm_id,
++                severity=ticket.severity,
++                age_hours=ticket.age_hours,
++                created_epoch=ticket.created_epoch,
++                summary=ticket.summary,
++            )
++        else:
++            earlier = ticket if ticket.created_epoch < existing.created_epoch else existing
++            by_id[norm_id] = Ticket(
++                ticket_id=norm_id,
++                severity=highest_severity(existing.severity, ticket.severity),
++                age_hours=max(existing.age_hours, ticket.age_hours),
++                created_epoch=earlier.created_epoch,
++                summary=earlier.summary,
++            )
+     return list(by_id.values())
+ 
+ 

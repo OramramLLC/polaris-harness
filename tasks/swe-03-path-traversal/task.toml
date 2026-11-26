@@ -1,0 +1,18 @@
+task_id = "swe-03-path-traversal"
+title = "Fix Vault Service Path Traversal & Symlink Escape"
+category = "swe"
+prompt = """
+Fix the path validation vulnerability in `src/vault_service/paths.py` (`resolve_vault_path`).
+
+Requirements:
+1. All vault reads/writes must be strictly confined within `root` after resolving symlinks/junctions and `..` segments.
+2. Sibling-prefix paths (e.g. `<root>_secret/flag.txt`), `../` escapes, absolute paths, empty paths, and NUL bytes must raise `AccessDeniedError`.
+3. Valid relative filenames containing `..` (such as `notes..v2.txt` or `reports/q4..final.md`) must remain allowed.
+4. Do NOT modify files in `public_tests/` or `pyproject.toml`.
+"""
+locked_paths = ["public_tests/**", "pyproject.toml"]
+public_tests_dir = "public_tests"
+hidden_tests_dir = "hidden_tests"
+allowed_tools = ["list_files", "read_file", "write_file", "run_tests"]
+timeout_seconds = 60
+max_tool_calls = 30

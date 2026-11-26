@@ -1,0 +1,31 @@
+# Environment & Secrets (NEVER COMMIT)
+.env
+.env.*
+*.pem
+*.key
+secrets/
+credentials.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# Local checkout of the pinned Mellyn core (see deploy/mellyn-core-pin.txt) and evaluation outputs
+core/
+runs/
+
+# IDE & OS
+.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Claude Code (personal settings and app-managed worktrees)
+.claude/settings.local.json
+.claude/worktrees/

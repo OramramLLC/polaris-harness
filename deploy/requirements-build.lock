@@ -1,0 +1,10 @@
+# Build backend for the editable installs of the pinned mellyn_security core and of polaris-harness (both [build-system]
+# requires setuptools>=75.0.0). Installed first, then both are installed with --no-build-isolation, so pip does not
+# download an unpinned, unhashed setuptools to build it.
+# Installed with: python -m pip install --require-hashes --no-deps -r deploy/requirements-build.lock
+# Hashes are the wheel and sdist PyPI publishes for this release; do not hand-edit them.
+
+# setuptools 84.2.1: uploaded 2026-10-20
+setuptools==84.2.1 \
+    --hash=sha256:ca140b45d5325a9478f880e351484f62fef15f336462e449ca0c03c873d589c2 \
+    --hash=sha256:3ff8b3b5492a0aa66960f4419365a86b84e013070d4313e4d4a6894f5d64d6bc
