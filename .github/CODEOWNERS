@@ -4,6 +4,7 @@
 /.github/                       @OramramLLC
 /deploy/                        @OramramLLC
 /pyproject.toml                 @OramramLLC
+/SECURITY.md                    @OramramLLC
 
 # The graders and the boundary to Mellyn (a change here changes every score)
 /src/polaris_harness/grading/   @OramramLLC
